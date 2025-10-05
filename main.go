@@ -7,37 +7,56 @@ import (
 	"strings"
 )
 
+func getLinesChannel(f io.ReadCloser) <-chan string{
+	lines := make(chan string)
+
+	go func(){
+
+		defer close(lines)
+		defer f.Close()
+
+		buffer := make([]byte, 8)
+		currentLine := ""
+		
+		for {
+
+			n, err := f.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				fmt.Println("Error reading file:", err)
+				break
+			}
+
+			chunks := string(buffer[:n])
+			parts := strings.Split(chunks,"\n")
+
+			for i :=0 ; i < len(parts)-1 ; i++ {
+				lines <- currentLine+parts[i]
+				currentLine = ""
+			}
+
+			currentLine += parts[len(parts)-1]
+		}:
+
+		if currentLine != "" {
+			lines <- currentLine
+		}
+
+	}()
+
+	return lines
+}
+
 func main() {
 	f, err := os.Open("messages.txt")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		fmt.Println(err)
 		return
 	}
-	defer f.Close()
 
-	buffer := make([]byte, 8) // read 8 bytes at a time
-	currentLine := ""        // holds the incomplete line between reads
-
-	for {
-		n, err := f.Read(buffer)
-		if err == io.EOF {
-			// end of file → break out after loop
-			break
-		}
-		if err != nil {
-			fmt.Println("Error reading file:", err)
-			break
-		}
-
-		chunks := string(buffer[:n])
-		parts := strings.Split(chunks,"\n")
-
-		for i :=0 ; i < len(parts)-1 ; i++ {
-			fmt.Printf("read: %s \n",currentLine+parts[i])
-			currentLine = ""
-		}
-
-		currentLine+=parts[len(parts)-1]
+	for line := range getLinesChannel(f){
+		fmt.Printf("read: %s \n",line)
 	}
-
 }
