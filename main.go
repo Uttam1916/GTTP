@@ -25,6 +25,6 @@ func main(){
 			fmt.Println(err)
 			break
 		}
-		fmt.Printf("%s \n",buffer)
+		fmt.Printf("%s \n",buffer[:n])
 	}
 }
