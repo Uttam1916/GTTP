@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"strings"
+	"net"
+	"log"
 )
 
 func getLinesChannel(f io.ReadCloser) <-chan string{
@@ -38,7 +40,7 @@ func getLinesChannel(f io.ReadCloser) <-chan string{
 			}
 
 			currentLine += parts[len(parts)-1]
-		}:
+		}
 
 		if currentLine != "" {
 			lines <- currentLine
@@ -50,6 +52,14 @@ func getLinesChannel(f io.ReadCloser) <-chan string{
 }
 
 func main() {
+
+	ln, err := net.Listen("tcp",":8080")
+	if err != nil{
+		log.Fatal(err)
+	}
+	fmt.Println("listening on port 8080")
+	defer ln.Close()
+
 	f, err := os.Open("messages.txt")
 	if err != nil {
 		fmt.Println(err)
