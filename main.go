@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"net"
 	"log"
@@ -59,14 +58,19 @@ func main() {
 	}
 	fmt.Println("listening on port 8080")
 	defer ln.Close()
+	
+	for{
+		con, err := ln.Accept()
+		if err!=nil{
+			log.Println(err)
+			continue
+		}
+		fmt.Println("connection established")
 
-	f, err := os.Open("messages.txt")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+		for line := range getLinesChannel(con){
+			fmt.Printf("read: %s \n",line)
+		}
 
-	for line := range getLinesChannel(f){
-		fmt.Printf("read: %s \n",line)
+		fmt.Println("Connection ended")
 	}
 }
